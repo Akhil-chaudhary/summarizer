@@ -3,8 +3,8 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.repositories.documents_repository import DocumentsRepository
-from app.services.documents_service import DocumentsService
 from app.routers.documents_router import get_documents_service
+from app.services.documents_service import DocumentsService
 from app.services.summarizer_service import SummarizerService
 
 

@@ -89,3 +89,99 @@ This repo includes `mangum` as a Lambda adapter. A typical production path:
 - DynamoDB for documents (instead of in-memory)
 
 If you want to mimic AWS locally, use LocalStack and deploy via SAM/Terraform.
+
+## LocalStack (AWS emulation)
+
+This repo includes a `docker-compose.yml` based on LocalStack's official Docker Compose installation guide:
+
+- https://docs.localstack.cloud/aws/getting-started/installation/#docker-compose
+
+### Start LocalStack
+
+```bash
+docker compose up -d
+```
+
+LocalStack runs on:
+
+- http://localhost:4566
+
+### Verify LocalStack is running
+
+If you have AWS CLI installed:
+
+```bash
+aws --endpoint-url=http://localhost:4566 sts get-caller-identity
+```
+
+If you do not have AWS CLI installed, you can verify LocalStack via its health endpoint:
+
+```powershell
+curl http://localhost:4566/_localstack/health
+```
+
+On Windows, if `aws` is not recognized, install AWS CLI v2 and reopen your terminal:
+
+- https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+
+### Deploy to LocalStack
+
+Use the Python deployment script to deploy the FastAPI app to LocalStack:
+
+```bash
+# Deploy the app
+python deploy_localstack.py
+```
+
+The script will:
+- ✅ Check if LocalStack is running
+- ✅ Create deployment package with dependencies
+- ✅ Update Lambda function code
+- ✅ Test both Lambda and API Gateway endpoints
+- ✅ Clean up temporary files
+
+### Test the deployment
+
+After deployment, your app is available at:
+
+- **API Gateway URL:** http://localhost:4566/restapis/oxs6mqkeau/prod/_user_request_/
+- **FastAPI Docs:** http://localhost:4566/restapis/oxs6mqkeau/prod/_user_request_/docs
+
+Test the endpoints:
+
+```bash
+# Test root endpoint
+curl http://localhost:4566/restapis/oxs6mqkeau/prod/_user_request_/
+
+# Test FastAPI docs
+curl http://localhost:4566/restapis/oxs6mqkeau/prod/_user_request_/docs
+```
+
+### Manual deployment steps
+
+If you prefer manual deployment:
+
+1. **Set AWS credentials:**
+```powershell
+$env:AWS_ACCESS_KEY_ID="test"
+$env:AWS_SECRET_ACCESS_KEY="test"
+$env:AWS_DEFAULT_REGION="us-east-1"
+```
+
+2. **Create deployment package:**
+```bash
+mkdir -p deploy_app/app
+cp -r app/* deploy_app/app/
+pip install fastapi uvicorn pydantic pydantic-settings mangum -t deploy_app/
+cd deploy_app && zip -r ../deploy.zip . && cd ..
+```
+
+3. **Update Lambda function:**
+```bash
+aws --endpoint-url=http://localhost:4566 lambda update-function-code --function-name summarizer-api --zip-file fileb://deploy.zip
+```
+
+4. **Test Lambda function:**
+```bash
+aws --endpoint-url=http://localhost:4566 lambda invoke --function-name summarizer-api --payload '{"path": "/docs", "httpMethod": "GET", "headers": {}}' response.json
+```
