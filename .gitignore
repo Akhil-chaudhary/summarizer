@@ -24,6 +24,9 @@ ENV/
 coverage.xml
 htmlcov/
 
+# Ruff
+.ruff_cache/
+
 # Type checking
 .mypy_cache/
 .pyre/
@@ -43,6 +46,10 @@ Thumbs.db
 
 # dotenv
 .env
+.env.*
+
+# SAM / Serverless build artifacts
+.aws-sam/
 
 # LocalStack
 .localstack/
